@@ -10,6 +10,8 @@ function MyButton() {
 }
 ```
 
+React is designed around the concept that components must be **pure**. This means that React assumes that every component you write is a pure function. This means that React components must always return the same JSX given the same inputs. Components should only return their JSX and not change any objects or variables that existed before rendering. However, it is completely fine to change variables that are created while rendering. 
+
 To use a component, nest it inside another component:
 ```javascript
 export default function MyApp() {
@@ -24,6 +26,8 @@ export default function MyApp() {
 
 *Note: React components must always start with capital letter. This distingushes them from HTML elements.*
 
+*Note: It is convient to keep tightly related small components in the same file. However **do not nest definitions of components**. When a child component needs some data from a parent, pass it by props.*
+
 ## JSX Syntax
 JSX is stricter than HTML. You must close tags like `<br />`. A component **cannot** return multiple JSX tags, they must be wrapped in a shared parent or in a React fragment:
 ```javascript
@@ -36,6 +40,7 @@ function AboutPage() {
   );
 }
 ```
+Additionally, in React many HTML and SVG attributes are written in camelCase. For historical reasons, `aria-*` and `data-*` attributes are written as in HTML with dashes.
 
 ### Styling
 To add a CSS class, use the `className` attribute:
@@ -122,7 +127,7 @@ return (
   <ul>{listItems}</ul>
 );
 ```
-Each item in the rendered list needs a unique `key` attribute. Usually this key should come from the data. React uses the keys to know what happened if you later insert, delete, or re-order items.
+Each item in the rendered list needs a unique `key` attribute among their siblings and the key cannot change. Usually this key should come from the data. React uses the keys to know what happened if you later insert, delete, or re-order items.
 
 ### Responding to Events
 To respond to different events, define **event handler** functions inside a component and pass them as attributes to element that needs them:
@@ -193,6 +198,34 @@ function MyButton({ count, onClick }) {
     <button onClick={onClick}>
       Clicked {count} times
     </button>
+  );
+}
+```
+
+When you want to nest React componets inside other React components, use the `children` prop. For example:
+
+```javascript
+import Avatar from './Avatar.js';
+
+function Card({ children }) {
+  return (
+    <div className="card">
+      {children}
+    </div>
+  );
+}
+
+export default function Profile() {
+  return (
+    <Card>
+      <Avatar
+        size={100}
+        person={{ 
+          name: 'Katsuko Saruhashi',
+          imageId: 'YfeOqp2'
+        }}
+      />
+    </Card>
   );
 }
 ```
