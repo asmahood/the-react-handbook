@@ -488,6 +488,7 @@ function Game() {
 
   // ...
 ```
+
 There are two mains problem with this:
 
 1. **Efficiency:** The component (and its children) have to re-render between each `set` call in the `chain`. In the example above, in the worst case (`setCard` -> render -> `setGoldCardCount` -> render -> `setRound` -> render -> `setIsGameOver` -> render) there are three unnecessary re-renders of the tree below.
@@ -803,7 +804,7 @@ An empty `[]` dependency array means the Effect synchronizes when the component 
 
 Props and state aren’t the only reactive values. Values that you calculate from them are also reactive. If the props or state change, your component will re-render, and the values calculated from them will also change. This is why all variables from the component body used by the Effect should be in the Effect dependency list. All values inside the component (including props, state, and variables in your component’s body) are reactive. Any reactive value can change on a re-render, so you need to include reactive values as Effect’s dependencies.
 
-<detail>
+<details>
 <summary>React Deep Dive</summary>
 
 Mutable values (including global variables) aren’t reactive.
@@ -813,7 +814,7 @@ A mutable value like `location.pathname` can’t be a dependency. It’s mutable
 A mutable value like ref.current or things you read from it also can’t be a dependency. The ref object returned by useRef itself can be a dependency, but its current property is intentionally mutable. It lets you keep track of something without triggering a re-render. But since changing it doesn’t trigger a re-render, it’s not a reactive value, and React won’t know to re-run your Effect when it changes.
 </details>
 
-### What if youi won't want to re-synchronize
+### What if you don't want to re-synchronize
 
 If you don't want to re-synchronize, you must prove that the values aren't reactive. You could move the values outside the component, or move them inside the effect. You can’t “choose” your dependencies. Your dependencies must include every reactive value you read in the Effect. Here is some ways to fix errors with Effects:
 
@@ -821,3 +822,35 @@ If you don't want to re-synchronize, you must prove that the values aren't react
 - If you want to read the latest value of props or state without “reacting” to it and re-synchronizing the Effect, you can split your Effect into a reactive part (which you’ll keep in the Effect) and a non-reactive part (which you’ll extract into something called an Effect Event).
 - Avoid relying on objects and functions as dependencies. If you create objects and functions during rendering and then read them from an Effect, they will be different on every render. This will cause your Effect to re-synchronize every time.
 
+## Choosing between event handlers and Effects
+
+When deciding whether a piece of logic should be in an event handler or an Effect, remember these key points:
+- Event handlers run in response to specific interactions
+- Effects run whenever synchronization is needed
+
+## Reactive values and reactive logic
+Props, state, and variables declared inside the component body are called **reactive values**. Reactive values can change due to a re-render. Event handlers and Effects respond to changes differently:
+
+- Logic inside event handlers is not reactive. It will not run again unless the user pefroms the same interaction again.
+- Logic inside Effects is reactive. If the Effect reads a reactive value, you have to specify it as a dependency. If a re-render changes the value, then the Effect's logic will run again.
+
+## Removing Effect Dependencies
+
+When you write an effect, you must specify all reactive values inside of the effect as dependencies. If you start by leaving the dependency array empty, the React linter will suggest what to include in the array. If you want to remove a dependency you must "prove" to the linter that it doesn't need to be a dependency. For example, moving a variable outside of the component. To change the dependencies, you need to change the code inside the Effect to no longer need those dependencies. 
+
+### Removing unnecessary dependencies
+
+Every time you adjust the Effect's dependencies to reflect the code:
+- You might want to re-execute different parts of your Effect under different conditions.
+- You might want to only read the latest value of some dependency instead of "reacting" to its changes.
+- A dependency may change too often unintentionally because it's an object or a function.
+
+To find the solution, you need to ask a few questions:
+
+#### Should this code move to an event handler?
+
+If the code should run in response to a particular action like submitting a form or clicking a button, then the code should not be in an effect an instead in an event handler.
+
+#### Is your Effect doing several unrelated things?
+
+Avoid using a single effect to synchronize two independent processes.
